@@ -3,7 +3,7 @@
 
 #include "../vector/GenVector.h"
 #include "Ray.h"
-#include "../camera/Camera.h"
+#include "../primitive/Camera.h"
 
 #include <math.h>
 
@@ -23,10 +23,14 @@ class RayGenerator{
     RayGenerator(Camera camera, int resX, int resY, float FoV){
       this->resX = resX;
       this->resY = resY;
-      this->left = this->cam.getDirection()[0] - this->resX/2;
-      this->right = this->cam.getDirection()[0] + this->resX/2;
-      this->bottom = this->cam.getDirection()[1] - this->resY/2;
-      this->top = this->cam.getDirection()[1] + this->resY/2;
+      //this->left = this->cam.getDirection()[0] - this->resX/2;
+      //this->right = this->cam.getDirection()[0] + this->resX/2;
+      //this->bottom = this->cam.getDirection()[1] - this->resY/2;
+      //this->top = this->cam.getDirection()[1] + this->resY/2;
+      this->left = (this->cam.getLocation() + (this->distance*this->cam.getDirection()))[0] - this->resX/2;
+      this->right = (this->cam.getLocation() + (this->distance*this->cam.getDirection()))[0] + this->resX/2;
+      this->bottom = (this->cam.getLocation() + (this->distance*this->cam.getDirection()))[1] - this->resY/2;
+      this->top = (this->cam.getLocation() + (this->distance*this->cam.getDirection()))[1] + this->resY/2;
       this->distance = calculateDistance(FoV);
       //this->distance = 50;
       this->cam = camera;
@@ -51,10 +55,10 @@ class RayGenerator{
     int resX;
     int resY;
     float distance;
-    int left;
-    int right;
-    int bottom;
-    int top;
+    float left;
+    float right;
+    float bottom;
+    float top;
     float FoV;
     Camera cam;
 

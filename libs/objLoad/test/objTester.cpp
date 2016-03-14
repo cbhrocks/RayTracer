@@ -1,7 +1,7 @@
 // Obj_loader.cpp : Defines the entry point for the console application.
 //
 #include <stdio.h>
-#include "objLoader.h"
+#include "../objLoader.h"
 
 void printVector(obj_vector *v)
 {
