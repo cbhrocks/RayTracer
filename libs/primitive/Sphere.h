@@ -15,18 +15,20 @@ class Sphere: public Primitive {
       this->radius = this->up.length();
     }
 
-    virtual float getHitPoint(Ray ray){
+    virtual HitPoint getHitPoint(Ray ray){
       float a = ray.getDirection().dot(ray.getDirection());
       float b = ray.getDirection().dot((ray.getOrigin() - this->location));
       float c = (ray.getOrigin() - this->location).dot(ray.getOrigin() - this->location) - pow(this->radius, 2);
       float discriminant = pow(b, 2) - a * c;
       if (discriminant < 0){
         //return nullptr;
-        return -1;
+        return HitPoint();
       } else {
         float t = (-b + sqrt(discriminant))/a;
+        Vector3 normal = (this->location - (ray.getOrigin() + ray.getDirection()*t)).normalize();
+        //Vector3 normal = Vector3(0,0,0);
         //HitPoint hp = HitPoint(Vector3(0,0,0), t);
-        return t;
+        return HitPoint(t, normal);
       }
     }
 

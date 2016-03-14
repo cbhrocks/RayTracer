@@ -23,20 +23,24 @@ Vector3 objToGenVec(obj_vector const * objVec)
   return v;
 }
 
-float traceRay(Ray ray, Primitive **primList, int primLength){
+HitPoint traceRay(Ray ray, Primitive **primList, int primLength){
+  HitPoint closestHP = HitPoint();
   float closestDis = -1;
   //Primitive hitObject;
 
   for (int i = 0; i < primLength; i++){
-    float dist = primList[i]->getHitPoint(ray);
-    if (dist > 0 && (dist < closestDis || closestDis < 0)){
-    printf("dist: %f\n", primList[i]->getHitPoint(ray));
-      closestDis = dist;
+    //float dist = primList[i]->getHitPoint(ray);
+    HitPoint HP = primList[i]->getHitPoint(ray);
+    //if (dist > 0 && (dist < closestDis || closestDis < 0)){
+    if (HP.getT() > 0 && (HP.getT() < closestHP.getT() || closestHP.getT() < 0)){
+    //printf("dist: %f\n", primList[i]->getHitPoint(ray));
+      //closestDis = dist;
+      closestHP = HP;
       //hitObject = *p;
     }
   }
 
-  return closestDis;
+  return closestHP;
 }
 
 int main(int argc, char ** argv)
@@ -157,14 +161,17 @@ int main(int argc, char ** argv)
     for(int x=0; x<RES; x++)
     {
       Ray r = generator.getRay(x, y);
-      float t = traceRay(r, primList, objData.sphereCount + objData.faceCount);
+      //float t = traceRay(r, primList, objData.sphereCount + objData.faceCount);
+      HitPoint HP = traceRay(r, primList, objData.sphereCount + objData.faceCount);
       Color c;
-      if (t >= 0){
-        Color c = Color(255.0f,255.0f,255.0f);
+      if (HP.getT() >= 0){
+        Vector3 d = HP.getNormal()*255.0f;
+        Color c = Color( abs(d[0]), abs(d[1]), abs(d[2]) );
         buffer.at(x,RES-y-1) = c;
       } else {
         Vector3 d = r.getDirection()*255.0f;
-        Color c = Color( abs(d[0]), abs(d[1]), abs(d[2]) );
+        //Color c = Color( abs(d[0]), abs(d[1]), abs(d[2]) );
+        Color c = Color( 0.0f, 0.0f, 0.0f );
         buffer.at(x,RES-y-1) = c;
       }
     }
@@ -175,3 +182,4 @@ int main(int argc, char ** argv)
 
   return 0;
 }
+

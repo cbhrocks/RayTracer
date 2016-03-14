@@ -18,7 +18,7 @@ class Triangle: public Primitive {
       this->normal = (a-c).cross(b-c);
     }
 
-    virtual float getHitPoint(Ray ray){
+    virtual HitPoint getHitPoint(Ray ray){
       float t = (this->a - ray.getOrigin()).dot(this->normal) /
         ray.getDirection().dot(this->normal);
       Vector3 x = ray.getDirection() * t;
@@ -26,10 +26,10 @@ class Triangle: public Primitive {
       if ((b-a).cross(x-a).dot(this->normal) > 0 &&
           (c-b).cross(x-b).dot(this->normal) > 0 &&
           (a-c).cross(x-c).dot(this->normal) > 0){
-        return t;
+        return HitPoint(t, this->normal);
       }
       else {
-        return -1;
+        return HitPoint();
       }
     }
 

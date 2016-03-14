@@ -3,6 +3,7 @@
 
 #include "../vector/GenVector.h"
 #include "../ray/Ray.h"
+#include "../ray/HitPoint.h"
 
 class Primitive {
   public:
@@ -16,8 +17,8 @@ class Primitive {
       this->up = up;
     }
 
-    virtual float getHitPoint(Ray r){
-      return -1;
+    virtual HitPoint getHitPoint(Ray r){
+      return HitPoint();
     }
 
   protected:
