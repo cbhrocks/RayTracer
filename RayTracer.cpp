@@ -9,6 +9,7 @@
 #include "libs/primitive/Camera.h"
 #include "libs/primitive/Sphere.h"
 #include "libs/primitive/Triangle.h"
+#include "Scene.h"
 
 #include <math.h> //Math funcitons and some constants
 #include <stdio.h>
@@ -21,26 +22,6 @@ Vector3 objToGenVec(obj_vector const * objVec)
   v[1] = objVec->e[1];
   v[2] = objVec->e[2];
   return v;
-}
-
-HitPoint traceRay(Ray ray, Primitive **primList, int primLength){
-  HitPoint closestHP = HitPoint();
-  float closestDis = -1;
-  //Primitive hitObject;
-
-  for (int i = 0; i < primLength; i++){
-    //float dist = primList[i]->getHitPoint(ray);
-    HitPoint HP = primList[i]->getHitPoint(ray);
-    //if (dist > 0 && (dist < closestDis || closestDis < 0)){
-    if (HP.getT() > 0 && (HP.getT() < closestHP.getT() || closestHP.getT() < 0)){
-    //printf("dist: %f\n", primList[i]->getHitPoint(ray));
-      //closestDis = dist;
-      closestHP = HP;
-      //hitObject = *p;
-    }
-  }
-
-  return closestHP;
 }
 
 int main(int argc, char ** argv)
@@ -59,6 +40,8 @@ int main(int argc, char ** argv)
   //load obj from file argv1
   objLoader objData = objLoader();
   objData.load(argv[1]);
+
+  Scene scene = Scene(objData.sphereCount, objData.faceCount, 1);
 
   if(objData.camera != NULL)
   {
@@ -83,18 +66,11 @@ int main(int argc, char ** argv)
         );
   }
 
-  //create a camera object
-  Camera cam = Camera(
+  scene.addCamera(
       objToGenVec(objData.vertexList[ objData.camera->camera_pos_index ]),
       objToGenVec(objData.vertexList[ objData.camera->camera_look_point_index ]),
       objToGenVec(objData.normalList[ objData.camera->camera_up_norm_index ]));
 
-  Primitive *primList[objData.sphereCount + objData.faceCount];
-
-  Sphere sphereList[objData.sphereCount];
-  int primNum = 0;
-
-  //print sphere info found and create spheres
   printf("Number of spheres: %i\n", objData.sphereCount);
   for(int i=0; i<objData.sphereCount; i++)
   {
@@ -118,16 +94,11 @@ int main(int argc, char ** argv)
         objData.normalList[ o->equator_normal_index ]->e[2]);
     printf("\n");
 
-    sphereList[i] = Sphere(
+    scene.addSphere(
         objToGenVec(objData.vertexList[o->pos_index]), 
         objToGenVec(objData.normalList[o->up_normal_index]), 
         objToGenVec(objData.normalList[o->equator_normal_index]));
-
-    primList[primNum] = &sphereList[i];
-    primNum++;
   }
-
-  Triangle triangleList[objData.faceCount];
 
   //print face info found and create triangles
   printf("Number of faces: %i\n", objData.sphereCount);
@@ -144,16 +115,13 @@ int main(int argc, char ** argv)
     }
     printf("\n");
 
-    triangleList[i] = Triangle(
+    scene.addTriangle(
         objToGenVec(objData.vertexList[o->vertex_index[0]]),
         objToGenVec(objData.vertexList[o->vertex_index[1]]),
         objToGenVec(objData.vertexList[o->vertex_index[2]]));
-
-    primList[primNum] = &triangleList[i];
-    primNum++;
   }
 
-  RayGenerator generator = RayGenerator(cam, RES, RES, M_PI*1/2);
+  RayGenerator generator = RayGenerator(scene.getCamera(), RES, RES, M_PI*1/2);
 
   //Convert vectors to RGB colors for testing results
   for(int y=0; y<RES; y++)
@@ -161,8 +129,7 @@ int main(int argc, char ** argv)
     for(int x=0; x<RES; x++)
     {
       Ray r = generator.getRay(x, y);
-      //float t = traceRay(r, primList, objData.sphereCount + objData.faceCount);
-      HitPoint HP = traceRay(r, primList, objData.sphereCount + objData.faceCount);
+      HitPoint HP = scene.traceRay(r);
       Color c;
       if (HP.getT() >= 0){
         Vector3 d = HP.getNormal()*255.0f;
@@ -170,7 +137,6 @@ int main(int argc, char ** argv)
         buffer.at(x,RES-y-1) = c;
       } else {
         Vector3 d = r.getDirection()*255.0f;
-        //Color c = Color( abs(d[0]), abs(d[1]), abs(d[2]) );
         Color c = Color( 0.0f, 0.0f, 0.0f );
         buffer.at(x,RES-y-1) = c;
       }
