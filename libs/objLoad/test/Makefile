@@ -19,7 +19,7 @@ FLAGS= $(WARN) $(OP)
 # setup object list
 LOCAL_CPP_OBJECTS= $(patsubst %.cpp, %.o, $(wildcard ./*.cpp))
 LOCAL_C_OBJECTS= $(patsubst %.c, %.o, $(wildcard ./*.c))
-LOADER_OBJECTS= $(patsubst %.c, %.o, $(wildcard ../*.cpp)) # the OBJ loader sub dir
+LOADER_OBJECTS= $(patsubst %.c, %.o, $(wildcard ../obj_loader/*.cpp)) # the OBJ loader sub dir
 OBJECTS=$(LOCAL_C_OBJECTS) $(LOCAL_CPP_OBJECTS) $(LOADER_OBJECTS)
 
 # make targets

@@ -7,28 +7,46 @@
 class Light {
   public:
     Light(){
-      this->intensity = 10;
+      this->location = Vector3(0,0,0);
     }
 
-    Light(float intensity){
-      this->intensity = intensity;
+    Light(Material* material){
+      this->location = Vector3(0,0,0);
+      this->material = material;
     }
 
-    virtual Vector3 calculateShading(Material m){
+    Light(Vector3 location, Material* material){
+      this->location = location;
+      this->material = material;
+    }
+
+    virtual void setMaterial(Material* material){
+      this->material = material;
+    }
+
+    virtual Vector3 getAmbientIntensity(float distance){
+      return this->material->getAmbientCoefficient();
+    }
+
+    virtual Vector3 getSpecularIntensity(float distance){
+      return this->material->getSpecularCoefficient();
+    }
+
+    virtual Vector3 getDiffuseIntensity(float distance){
+      return this->material->getDiffuseCoefficient();
+    }
+
+    virtual Vector3 getDirection(Vector3 hitLoc){
       return Vector3(0,0,0);
     }
 
-  protected:
-    float intensity;
-
-    float max(float a, float b){
-      if (a > b){
-        return a;
-      }
-      else {
-        return b;
-      }
+    virtual Vector3 getLocation(){
+      return this->location;
     }
+
+  protected:
+    Vector3 location;
+    Material* material;
 };
 
 #endif

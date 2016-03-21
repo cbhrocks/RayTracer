@@ -344,7 +344,7 @@ public:
 
 	T distance(const GenVector& a)
 	{
-		T disSquared = this->lengthSquared(a);
+		T disSquared = this->distanceSquared(a);
 		return sqrt( disSquared );
 	}
 	
@@ -385,6 +385,11 @@ public:
 			if(fabs(c[i]) > fabs(c[i-1]))
 				largest = i;
 		return largest;
+	}
+
+	void print()
+	{
+    printf("Vector: %f, %f, %f\n", c[0], c[1], c[2]);
 	}
 };
 

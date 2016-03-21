@@ -11,7 +11,7 @@ class Ray
 
     Ray(Vector3 origin, Vector3 direction){
       this->origin  = origin;
-      this->direction = direction;
+      this->direction = direction.normalize();
     }
 
     Vector3 getDirection(){

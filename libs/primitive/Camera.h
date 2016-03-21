@@ -6,21 +6,21 @@
 class Camera {
   public:
     Camera(){
-      this->w = Vector3(0,0,1);
-      this->u = Vector3(1,0,0);
-      this->v = Vector3(0,1,0);
       this->up = Vector3(0, 1, 0);
-      this->location = Vector3(0,0,0);
-      this->direction = -this->w;
+      this->location = Vector3(0,1,2);
+      this->direction = Vector3(0,0,-1);
+      this->w = -this->direction;
+      this->u = (up.cross(this->w)).normalize();
+      this->v = (this->w.cross(this->u)).normalize();
     }
 
     Camera(Vector3 location, Vector3 direction, Vector3 up){
       this->location = location;
       this->up = up.normalize();
       this->direction = direction.normalize();
-      this->w = -direction;
-      this->u = up.cross(this->w);
-      this->v = this->w.cross(this->u);
+      this->w = -this->direction/this->direction.length();
+      this->u = ((up.cross(this->w))/(up.cross(this->w)).length()).normalize();
+      this->v = (this->w.cross(this->u)).normalize();
     }
 
     Vector3 getLocation(){

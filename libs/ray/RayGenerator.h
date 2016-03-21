@@ -9,45 +9,37 @@
 
 class RayGenerator{
   public:
-    RayGenerator(){
+    RayGenerator(Camera* camera){
       this->resX = 100;
       this->resY = 100;
-      this->cam = Camera();
-      this->left = this->cam.getLocation()[0] - this->resX/2;
-      this->right = this->cam.getLocation()[0] + this->resX/2;
-      this->bottom = this->cam.getLocation()[1] - this->resY/2;
-      this->top = this->cam.getLocation()[1] + this->resY/2;
+      this->cam = camera;
+      this->left = -this->resX/2;
+      this->right = this->resX/2;
+      this->bottom = -this->resY/2;
+      this->top = this->resY/2;
       this->distance = this->top;
     }
 
-    RayGenerator(Camera camera, int resX, int resY, float FoV){
+    RayGenerator(Camera* camera, int resX, int resY, float FoV){
       this->resX = resX;
       this->resY = resY;
-      //this->left = this->cam.getDirection()[0] - this->resX/2;
-      //this->right = this->cam.getDirection()[0] + this->resX/2;
-      //this->bottom = this->cam.getDirection()[1] - this->resY/2;
-      //this->top = this->cam.getDirection()[1] + this->resY/2;
-      this->left = (this->cam.getLocation() + (this->distance*this->cam.getDirection()))[0] - this->resX/2;
-      this->right = (this->cam.getLocation() + (this->distance*this->cam.getDirection()))[0] + this->resX/2;
-      this->bottom = (this->cam.getLocation() + (this->distance*this->cam.getDirection()))[1] - this->resY/2;
-      this->top = (this->cam.getLocation() + (this->distance*this->cam.getDirection()))[1] + this->resY/2;
-      this->distance = calculateDistance(FoV);
-      //this->distance = 50;
       this->cam = camera;
+      this->distance = calculateDistance(FoV * M_PI/180);
+      this->left = -this->resX/2;
+      this->right = this->resX/2;
+      this->bottom = -this->resY/2;
+      this->top = this->resY/2;
     }
 
     Ray getRay(int i, int j){
-      //double wLoc = this->cam.getLocation()[2] - this->distance;
-      //double uLoc = this->cam.getLocation()[0] + this->left + (this->right - this->left) * (i + 0.5)/this->resX;
-      //double vLoc = this->cam.getLocation()[1] + this->bottom + (this->top - this->bottom) * (j + 0.5)/this->resY;
       float scalarU = this->left + (this->right - this->left) * (i + 0.5)/this->resX;
       float scalarV = this->bottom + (this->top - this->bottom) * (j + 0.5)/this->resY;
-      Vector3 s = this->cam.getLocation() + 
-        scalarU * this->cam.getU() + 
-        scalarV * this->cam.getV() - 
-        this->distance*this->cam.getW();
-      Vector3 rayDirection = s - this->cam.getLocation();
-      Ray ray = Ray(this->cam.getLocation(), rayDirection.normalize());
+      Vector3 s = this->cam->getLocation() + 
+        scalarU * this->cam->getU() + 
+        scalarV * this->cam->getV() - 
+        this->distance*this->cam->getW();
+      Vector3 rayDirection = (s - this->cam->getLocation()).normalize();
+      Ray ray = Ray(this->cam->getLocation(), rayDirection);
       return ray;
     }
 
@@ -60,7 +52,7 @@ class RayGenerator{
     float bottom;
     float top;
     float FoV;
-    Camera cam;
+    Camera *cam;
 
     float calculateDistance(float FoV){
       float d = (this->resX/2)/tan(FoV/2);

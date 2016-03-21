@@ -6,79 +6,218 @@
 #include "libs/objLoad/objLoader.h"
 #include "libs/ray/Ray.h"
 #include "libs/ray/RayGenerator.h"
-#include "Buffer.h"
+#include "libs/shading/Material.h"
+#include "libs/shading/Shader.h"
 #include "libs/primitive/Camera.h"
+#include "libs/primitive/Primitive.h"
 #include "libs/primitive/Sphere.h"
 #include "libs/primitive/Triangle.h"
 #include "libs/shading/Light.h"
-#include "libs/shading/AmbientLight.h"
-#include "Scene.h"
+#include "libs/shading/DirectionalLight.h"
+#include "libs/shading/PointLight.h"
+#include "Buffer.h"
 
 #include <math.h>
 
 class Scene{
   public:
-    Scene(int sphereNum, int triangleNum, int lightNum){
+    Scene(int sphereNum, int triangleNum, int directionalLightNum, int pointLightNum, int shaderNum, int materialNum){
+      this->primNum = sphereNum + triangleNum;
+      this->lightNum = directionalLightNum + pointLightNum;
+
+      this->primPointerList = new Primitive*[this->primNum];
+      this->lightPointerList = new Light*[this->lightNum];
+
       this->sphereList = new Sphere[sphereNum];
       this->triangleList = new Triangle[triangleNum];
-      this->lightPointerList = new Light*[lightNum];
-      this->primPointerNum = sphereNum + triangleNum;
-      this->primPointerList = new Primitive*[primPointerNum];
+      this->shaderList = new Shader[shaderNum];
+      this->materialList = new Material[materialNum];
+      this->directionalLightList = new DirectionalLight[directionalLightNum];
+      this->pointLightList = new PointLight[pointLightNum];
+
       this->sphereLoc = 0;
       this->triangleLoc = 0;
-      this->primLoc = 0;
       this->lightLoc = 0;
+      this->materialLoc = 0;
+      this->shaderLoc = 0;
+      this->directionalLightLoc = 0;
+      this->pointLightLoc = 0;
+      this->primLoc = 0;
+
+      this->camera = Camera();
+      this->defaultMaterial = Material();
+      this->defaultShader = Shader();
+      this->defaultLight = DirectionalLight(&this->defaultMaterial);
+
+      if (lightNum == 0){
+        this->directionalLightList = new DirectionalLight[1];
+        this->lightPointerList = new Light*[1];
+        this->directionalLightList[directionalLightNum] = defaultLight;
+        this->lightPointerList[lightNum++] = &this->directionalLightList[directionalLightNum++];
+      }
     }
 
-    void addSphere(Vector3 location, Vector3 up, Vector3 direction){
-      this->sphereList[this->sphereLoc] = Sphere(location, up, direction);
-      this->primPointerList[this->primLoc++] = &this->sphereList[sphereLoc++];
+    Primitive* addSphere(
+        Vector3 location, 
+        Vector3 up, 
+        Vector3 direction, 
+        Material *material = 0,
+        Shader *shader = 0
+        ){
+      if (shader == 0){
+        shader = &this->defaultShader;
+      }
+      if (material == 0){
+        material = &this->defaultMaterial;
+      }
+      this->sphereList[this->sphereLoc] = Sphere(location, up, direction, shader, material);
+      return this->primPointerList[this->primLoc++] = &this->sphereList[sphereLoc++];
     }
 
-    void addTriangle(Vector3 v1, Vector3 v2, Vector3 v3){
-      this->triangleList[this->triangleLoc] = Triangle(v1, v2 ,v3);
+    void addTriangle(
+        Vector3 v1, 
+        Vector3 v2, 
+        Vector3 v3, 
+        Material *material = 0,
+        Shader *shader = 0
+        ){
+      if (shader == 0){
+        shader = &this->defaultShader;
+      }
+      if (material == 0){
+        material = &this->defaultMaterial;
+      }
+      this->triangleList[this->triangleLoc] = Triangle(v1, v2, v3, shader, material);
       this->primPointerList[this->primLoc++] = &this->triangleList[triangleLoc++];
     }
 
     void addCamera(Vector3 location, Vector3 look, Vector3 up){
-      this->camera = Camera(location, look, up);
+      this->camera = Camera(location, (look - location), up);
     }
 
-    void setAmbientLight(float intensity){
-      this->ambientLight = AmbientLight(intensity);
-      this->lightPointerList[lightLoc++] = &ambientLight;
+    //void setAmbientLight(float intensity){
+    //this->ambientLight = AmbientLight(intensity);
+    //}
+
+    void addDirectionalLight(
+        Material* material,
+        Vector3 direction){
+      this->directionalLightList[directionalLightLoc] = 
+        DirectionalLight(material, direction);
+      this->lightPointerList[this->lightLoc++] = 
+        &this->directionalLightList[directionalLightLoc++];
     }
 
-    Camera getCamera(){
-      return this->camera;
+    void addPointLight(
+        Vector3 location,
+        Material* material
+        ){
+      this->pointLightList[pointLightLoc] = 
+        PointLight(location, material);
+      this->lightPointerList[this->lightLoc++] = 
+        &this->pointLightList[pointLightLoc++];
     }
 
-    HitPoint traceRay(Ray ray){
+    Shader* addShader(){
+      this->shaderList[shaderLoc] = Shader();
+      return &this->shaderList[shaderLoc++];
+    }
+
+    Material* addMaterial(
+        char* name,
+        Vector3 ambientCoefficient,
+        Vector3 diffuseCoefficient, 
+        Vector3 specularCoefficient, 
+        float reflect,
+        float translucent,
+        int glossy,
+        int shine,
+        float refract,
+        char* texture
+        ){
+      this->materialList[this->materialLoc] = Material(
+          name,
+          ambientCoefficient,
+          diffuseCoefficient, 
+          specularCoefficient, 
+          reflect,
+          translucent,
+          glossy,
+          shine,
+          refract,
+          texture
+          );
+      return &this->materialList[materialLoc++];
+    }
+
+    Material* getMaterial(int index){
+      return &this->materialList[index];
+    }
+
+    Camera* getCamera(){
+      return &this->camera;
+    }
+
+    Color getColor(HitPoint* hp, Shader* shader, Ray ray){
+      if (hp->getT() > 0){
+      return shader->getColor(
+          this,
+          hp,
+          ray.getDirection(),
+          this->lightPointerList, 
+          this->primPointerList,
+          this->lightNum,
+          this->primNum
+          );
+      }
+      else{
+        return Color(0,0,0);
+      }
+    }
+
+    Color traceRay(Ray ray){
       HitPoint closestHP = HitPoint();
+      Primitive* closestPrim = this->primPointerList[0];
       float closestDis = -1;
-      for (int i = 0; i < this->primPointerNum; i++){
+      for (int i = 0; i < this->primNum; i++){
         HitPoint HP = this->primPointerList[i]->getHitPoint(ray);
-        if (HP.getT() > 0 && (HP.getT() < closestHP.getT() || closestHP.getT() < 0)){
+        if (HP.getT() > 0 && (HP.getT() < closestHP.getT() || closestHP.getT() <= 0)){
           closestHP = HP;
+          closestPrim = this->primPointerList[i];
         }
       }
-      return closestHP;
+      Color retColor = getColor(&closestHP, closestPrim->getShader(), ray);
+      //Vector3 nc = (closestHP.getNormal() * 255);
+      //Color retColor = Color(nc[0], nc[1], nc[2]);
+      return retColor;
     }
 
   private:
+    Material defaultMaterial;
+    Shader defaultShader;
+    DirectionalLight defaultLight;
+
     int sphereLoc;
     int triangleLoc;
+    int shaderLoc;
     int primLoc;
     int lightLoc;
-    int primPointerNum;
+    int directionalLightLoc;
+    int pointLightLoc;
+    int materialLoc;
+
+    int primNum;
+    int lightNum;
 
     Camera camera;
     Triangle *triangleList;
     Sphere *sphereList;
+    Shader *shaderList;
+    Material *materialList;
     Primitive **primPointerList;
-    AmbientLight ambientLight;
+    DirectionalLight *directionalLightList;
+    PointLight *pointLightList;
     Light **lightPointerList;
-
 };
 
 #endif

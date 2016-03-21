@@ -1,28 +1,4 @@
-#define RES 500
-
-#include "libs/vector/GenVector.h"
-#include "libs/png/simplePNG.h"
-#include "libs/objLoad/objLoader.h"
-#include "libs/ray/Ray.h"
-#include "libs/ray/RayGenerator.h"
-#include "Buffer.h"
-#include "libs/primitive/Camera.h"
-#include "libs/primitive/Sphere.h"
-#include "libs/primitive/Triangle.h"
-#include "Scene.h"
-
-#include <math.h> //Math funcitons and some constants
-#include <stdio.h>
-
-//This might be helpful to convert from obj vectors to GenVectors
-Vector3 objToGenVec(obj_vector const * objVec)
-{
-  Vector3 v;
-  v[0] = objVec->e[0];
-  v[1] = objVec->e[1];
-  v[2] = objVec->e[2];
-  return v;
-}
+#include "RayTracer.h"
 
 int main(int argc, char ** argv)
 {
@@ -41,111 +17,238 @@ int main(int argc, char ** argv)
   objLoader objData = objLoader();
   objData.load(argv[1]);
 
-  Scene scene = Scene(objData.sphereCount, objData.faceCount, 1);
+  //create scene object
+  Scene scene = Scene(objData.sphereCount, objData.faceCount, 0, objData.lightPointCount, 0, objData.materialCount);
 
-  if(objData.camera != NULL)
-  {
-    printf("Found a camera\n");
-    printf(" position: ");
-    printf("%f %f %f\n",
-        objData.vertexList[ objData.camera->camera_pos_index ]->e[0],
-        objData.vertexList[ objData.camera->camera_pos_index ]->e[1],
-        objData.vertexList[ objData.camera->camera_pos_index ]->e[2]
-        );
-    printf(" looking at: ");
-    printf("%f %f %f\n",
-        objData.vertexList[ objData.camera->camera_look_point_index ]->e[0],
-        objData.vertexList[ objData.camera->camera_look_point_index ]->e[1],
-        objData.vertexList[ objData.camera->camera_look_point_index ]->e[2]
-        );
-    printf(" up normal: ");
-    printf("%f %f %f\n",
-        objData.normalList[ objData.camera->camera_up_norm_index ]->e[0],
-        objData.normalList[ objData.camera->camera_up_norm_index ]->e[1],
-        objData.normalList[ objData.camera->camera_up_norm_index ]->e[2]
-        );
-  }
+  //create camera from objData
+  loadCameraInfo(&objData, &scene);
 
-  scene.addCamera(
-      objToGenVec(objData.vertexList[ objData.camera->camera_pos_index ]),
-      objToGenVec(objData.vertexList[ objData.camera->camera_look_point_index ]),
-      objToGenVec(objData.normalList[ objData.camera->camera_up_norm_index ]));
+  //create materials from objData
+  loadMaterialInfo(&objData, &scene);
 
-  printf("Number of spheres: %i\n", objData.sphereCount);
-  for(int i=0; i<objData.sphereCount; i++)
-  {
-    obj_sphere *o = objData.sphereList[i];
-    printf(" sphere: %d\n", i);
-    
-    printf(" position: ");
-    printf("%f %f %f\n", 
-        objData.vertexList[ o->pos_index ]->e[0], 
-        objData.vertexList[ o->pos_index ]->e[1], 
-        objData.vertexList[ o->pos_index ]->e[2]);
-    printf(" position: ");
-    printf("%f %f %f\n", 
-        objData.normalList[ o->up_normal_index ]->e[0], 
-        objData.normalList[ o->up_normal_index ]->e[1], 
-        objData.normalList[ o->up_normal_index ]->e[2]);
-    printf(" position: ");
-    printf("%f %f %f\n", 
-        objData.normalList[ o->equator_normal_index ]->e[0], 
-        objData.normalList[ o->equator_normal_index ]->e[1], 
-        objData.normalList[ o->equator_normal_index ]->e[2]);
-    printf("\n");
+  //create primitives from objData
+  loadPrimitiveInfo(&objData, &scene);
 
-    scene.addSphere(
-        objToGenVec(objData.vertexList[o->pos_index]), 
-        objToGenVec(objData.normalList[o->up_normal_index]), 
-        objToGenVec(objData.normalList[o->equator_normal_index]));
-  }
+  loadPointLightInfo(&objData, &scene);
 
-  //print face info found and create triangles
-  printf("Number of faces: %i\n", objData.sphereCount);
-  for(int i=0; i<objData.faceCount; i++)
-  {
-    obj_face *o = objData.faceList[i];
-    printf(" face ");
-    for(int j=0; j<3; j++)
-    {
-      printf("%f %f %f | ", 
-          objData.vertexList[ o->vertex_index[j] ]->e[0],
-          objData.vertexList[ o->vertex_index[j] ]->e[1],
-          objData.vertexList[ o->vertex_index[j] ]->e[2]);
-    }
-    printf("\n");
+  //create ray generator
+  RayGenerator generator = RayGenerator(scene.getCamera(), RES, RES, 90.0f);
 
-    scene.addTriangle(
-        objToGenVec(objData.vertexList[o->vertex_index[0]]),
-        objToGenVec(objData.vertexList[o->vertex_index[1]]),
-        objToGenVec(objData.vertexList[o->vertex_index[2]]));
-  }
+  //create directional light in scene
+  //scene.addMaterial(
+      //"directLight", 
+      //Vector3(.2, .2, .2),
+      //Vector3(.5, .5, .5),
+      //Vector3(.8, .8, .8),
+      //0,
+      //0,
+      //0,
+      //0,
+      //0,
+      //0
+      //);
+  //scene.addDirectionalLight(scene.getMaterial(5), Vector3(1, -1, 0));
+  //scene.addDirectionalLight(Vector3(.1, .1, .1), Vector3(.25, .25, .25), Vector3(.4, .4, .4), Vector3(-1, 1, 0));
 
-  RayGenerator generator = RayGenerator(scene.getCamera(), RES, RES, M_PI*1/2);
-
-  //Convert vectors to RGB colors for testing results
+  //Convert vectors to RGB colors for viewing pleasure
   for(int y=0; y<RES; y++)
   {
     for(int x=0; x<RES; x++)
     {
       Ray r = generator.getRay(x, y);
-      HitPoint HP = scene.traceRay(r);
-      Color c;
-      if (HP.getT() >= 0){
-        Vector3 d = HP.getNormal()*255.0f;
-        Color c = Color( abs(d[0]), abs(d[1]), abs(d[2]) );
-        buffer.at(x,RES-y-1) = c;
-      } else {
-        Vector3 d = r.getDirection()*255.0f;
-        Color c = Color( 0.0f, 0.0f, 0.0f );
-        buffer.at(x,RES-y-1) = c;
-      }
+      Color c = scene.traceRay(r);
+      buffer.at(x,RES-y-1) = c;
     }
   }
 
   //Write output buffer to file argv2
   simplePNG_write(argv[2], buffer.getWidth(), buffer.getHeight(), (unsigned char*)&buffer.at(0,0));
 
+  printf("done making picture\n");
+
   return 0;
 }
 
+//This might be helpful to convert from obj vectors to GenVectors
+Vector3 objToGenVec(obj_vector const * objVec)
+{
+  Vector3 v;
+  v[0] = objVec->e[0];
+  v[1] = objVec->e[1];
+  v[2] = objVec->e[2];
+  return v;
+}
+
+void printVector(obj_vector *v)
+{
+  printf("%.2f,", v->e[0] );
+  printf("%.2f,", v->e[1] );
+  printf("%.2f  ", v->e[2] );
+}
+
+void loadCameraInfo(objLoader* objData, Scene* scene){
+
+  if(objData->camera != NULL)
+  {
+    printf("Found a camera\n");
+    printf(" position: ");
+    printVector(objData->vertexList[ objData->camera->camera_pos_index ]);
+    printf("\n looking at: ");
+    printVector(objData->vertexList[ objData->camera->camera_look_point_index ]);
+    printf("\n up normal: ");
+    printVector(objData->normalList[ objData->camera->camera_up_norm_index ]);
+    printf("\n\n");
+
+  scene->addCamera(
+      objToGenVec(objData->vertexList[ objData->camera->camera_pos_index ]),
+      objToGenVec(objData->vertexList[ objData->camera->camera_look_point_index ]),
+      objToGenVec(objData->normalList[ objData->camera->camera_up_norm_index ]));
+  }
+}
+
+//void getPrimitiveInfo(objLoader* objData, Scene* scene, Shader* shader){
+void loadPrimitiveInfo(objLoader* objData, Scene* scene){
+  loadSphereInfo(objData, scene);
+  loadTriangleInfo(objData, scene);
+}
+
+//void getSphereInfo(objLoader* objData, Scene* scene, Shader* shader){
+void loadSphereInfo(objLoader* objData, Scene* scene){
+  printf("Number of spheres: %i\n", objData->sphereCount);
+  for(int i=0; i<objData->sphereCount; i++)
+  {
+    obj_sphere *o = objData->sphereList[i];
+    printf(" sphere: %d\n", i);
+    
+    printf(" position: ");
+    printVector(objData->vertexList[ o->pos_index ]);
+    printf("\n up normal: ");
+    printVector(objData->normalList[ o->up_normal_index ]);
+    printf("\n equator normal: ");
+    printVector(objData->normalList[ o->equator_normal_index ]);
+
+    Primitive* sphere;
+    if (objData->materialCount > 0){
+    sphere = scene->addSphere(
+        objToGenVec(objData->vertexList[o->pos_index]), 
+        objToGenVec(objData->normalList[o->up_normal_index]), 
+        objToGenVec(objData->normalList[o->equator_normal_index]),
+        scene->getMaterial( o->material_index )
+        );
+    }
+    else{
+    sphere = scene->addSphere(
+        objToGenVec(objData->vertexList[o->pos_index]), 
+        objToGenVec(objData->normalList[o->up_normal_index]), 
+        objToGenVec(objData->normalList[o->equator_normal_index])
+        );
+    }
+
+    printf("\n material: ");
+    printf("%s", sphere->getMaterial()->getName());
+    printf("\n");
+  }
+}
+
+//void getTriangleInfo(objLoader* objData, Scene* scene, Shader* shader){
+void loadTriangleInfo(objLoader* objData, Scene* scene){
+  printf("Number of faces: %i\n", objData->faceCount);
+
+  for(int i=0; i<objData->faceCount; i++)
+  {
+    obj_face *o = objData->faceList[i];
+    printf(" face:  ");
+    for(int j=0; j<3; j++)
+    {
+      printVector(objData->vertexList[ o->vertex_index[j] ]);
+      //printf(" - normal: ");
+      //printVector(objData->normalList[ o->normal_index[j] ]);
+      printf("| ");
+    }
+    if (objData->materialCount > 0){
+      printf("material: ");
+      printf("%s", scene->getMaterial( o->material_index)->getName());
+    }
+    printf("\n");
+
+    //printVector( objData->normalList[ o->normal_index[0] ]);
+    //printVector( objData->normalList[ o->normal_index[1] ]);
+    //printVector( objData->normalList[ o->normal_index[2] ]);
+    //printf("\n");
+
+    if (objData->materialCount > 0){
+    scene->addTriangle(
+        objToGenVec(objData->vertexList[o->vertex_index[0]]),
+        objToGenVec(objData->vertexList[o->vertex_index[1]]),
+        objToGenVec(objData->vertexList[o->vertex_index[2]]),
+        scene->getMaterial( o->material_index )
+        );
+    }
+    else {
+    scene->addTriangle(
+        objToGenVec(objData->vertexList[o->vertex_index[0]]),
+        objToGenVec(objData->vertexList[o->vertex_index[1]]),
+        objToGenVec(objData->vertexList[o->vertex_index[2]])
+        );
+    }
+  }
+
+  //printf("\n");
+}
+
+void loadPointLightInfo(objLoader* objData, Scene* scene){
+  printf("Number of point lights: %i\n", objData->lightPointCount);
+  for(int i=0; i<objData->lightPointCount; i++)
+  {
+    obj_light_point *o = objData->lightPointList[i];
+    printf(" plight ");
+    printVector(objData->vertexList[ o->pos_index ]);
+    printf("\n");
+
+    scene->addPointLight(objToGenVec(objData->vertexList[ o->pos_index ]), scene->getMaterial(o->material_index));
+  }
+
+  printf("\n");
+}
+
+void loadMaterialInfo(objLoader* objData, Scene* scene){
+  printf("Number of materials: %i\n", objData->materialCount);
+  for(int i=0; i<objData->materialCount; i++)
+  {
+    obj_material *mtl = objData->materialList[i];
+    printf(" name: %s", mtl->name);
+    printf(" amb: %.2f ", mtl->amb[0]);
+    printf("%.2f ", mtl->amb[1]);
+    printf("%.2f\n", mtl->amb[2]);
+
+    printf(" diff: %.2f ", mtl->diff[0]);
+    printf("%.2f ", mtl->diff[1]);
+    printf("%.2f\n", mtl->diff[2]);
+
+    printf(" spec: %.2f ", mtl->spec[0]);
+    printf("%.2f ", mtl->spec[1]);
+    printf("%.2f\n", mtl->spec[2]);
+
+    printf(" reflect: %.2f\n", mtl->reflect);
+    printf(" trans: %.2f\n", mtl->trans);
+    printf(" glossy: %i\n", mtl->glossy);
+    printf(" shiny: %i\n", mtl->shiny);
+    printf(" refract: %.2f\n", mtl->refract_index);
+
+    printf(" texture: %s\n", mtl->texture_filename);
+    printf("\n");
+
+    scene->addMaterial(
+        mtl->name, 
+        Vector3(mtl->amb[0], mtl->amb[1], mtl->amb[2]),
+        Vector3(mtl->diff[0], mtl->diff[1], mtl->diff[2]),
+        Vector3(mtl->spec[0], mtl->spec[1], mtl->spec[2]),
+        mtl->reflect,
+        mtl->trans,
+        mtl->glossy,
+        mtl->shiny,
+        mtl->refract_index,
+        mtl->texture_filename
+        );
+  }
+}
