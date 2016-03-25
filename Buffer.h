@@ -3,6 +3,7 @@
 
 #include "libs/vector/GenVector.h"
 
+template<class T = Color>
 class Buffer
 {
 public:
@@ -42,12 +43,12 @@ public:
 		dealloc();
 	}
 
-	Color at(unsigned int x, unsigned int y) const
+	T at(unsigned int x, unsigned int y) const
 	{
 		return data[x+y*this->w];
 	}
 
-	Color & at(unsigned int x, unsigned int y)
+	T & at(unsigned int x, unsigned int y)
 	{
 		return data[x+y*this->w];
 	}
@@ -61,7 +62,7 @@ public:
 private:
 	unsigned int w;
 	unsigned int h;
-	Color * data;
+	T * data;
 
 	void alloc()
 	{
@@ -69,7 +70,7 @@ private:
 		if(size == 0)
 			return;
 
-		data = (Color*) malloc(this->w * this->h * sizeof(Color) );
+		data = (T*) malloc(this->w * this->h * sizeof(T) );
 	}
 
 	void dealloc()

@@ -4,7 +4,8 @@ int main(int argc, char ** argv)
 {
 
   //frame buffer for RESxRES
-  Buffer buffer = Buffer(RES, RES);
+  Buffer<Vector3> buffer = Buffer<Vector3>(RES, RES);
+  Buffer<Color> bufferC = Buffer<Color>(RES, RES);
 
   //Need at least two arguments (obj input and png output)
   if(argc < 3)
@@ -51,18 +52,34 @@ int main(int argc, char ** argv)
   //scene.addDirectionalLight(Vector3(.1, .1, .1), Vector3(.25, .25, .25), Vector3(.4, .4, .4), Vector3(-1, 1, 0));
 
   //Convert vectors to RGB colors for viewing pleasure
+  float highestValue = 0.0f;
   for(int y=0; y<RES; y++)
   {
     for(int x=0; x<RES; x++)
     {
       Ray r = generator.getRay(x, y);
-      Color c = scene.traceRay(r);
+      Vector3 c = scene.traceRay(r);
+      float curBiggest = c[c.maxMagnitudeComponent()];
+      if (curBiggest > highestValue){
+        highestValue = curBiggest;
+      }
       buffer.at(x,RES-y-1) = c;
     }
   }
 
+  //printf("highest value: %f", highestValue);
+
+  for(int y=0; y<RES; y++)
+  {
+    for(int x=0; x<RES; x++)
+    {
+      Vector3 oldV  = buffer.at(x,y)*255.0f/highestValue;
+      bufferC.at(x,y) = Color(oldV[0], oldV[1], oldV[2]);
+    }
+  }
+
   //Write output buffer to file argv2
-  simplePNG_write(argv[2], buffer.getWidth(), buffer.getHeight(), (unsigned char*)&buffer.at(0,0));
+  simplePNG_write(argv[2], bufferC.getWidth(), bufferC.getHeight(), (unsigned char*)&bufferC.at(0,0));
 
   printf("done making picture\n");
 
@@ -231,8 +248,8 @@ void loadMaterialInfo(objLoader* objData, Scene* scene){
 
     printf(" reflect: %.2f\n", mtl->reflect);
     printf(" trans: %.2f\n", mtl->trans);
-    printf(" glossy: %i\n", mtl->glossy);
-    printf(" shiny: %i\n", mtl->shiny);
+    printf(" glossy: %i\n", (int) mtl->glossy);
+    printf(" shiny: %i\n", (int) mtl->shiny);
     printf(" refract: %.2f\n", mtl->refract_index);
 
     printf(" texture: %s\n", mtl->texture_filename);
@@ -245,8 +262,8 @@ void loadMaterialInfo(objLoader* objData, Scene* scene){
         Vector3(mtl->spec[0], mtl->spec[1], mtl->spec[2]),
         mtl->reflect,
         mtl->trans,
-        mtl->glossy,
-        mtl->shiny,
+        (int) mtl->glossy,
+        (int) mtl->shiny,
         mtl->refract_index,
         mtl->texture_filename
         );

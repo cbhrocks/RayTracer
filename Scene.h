@@ -95,23 +95,26 @@ class Scene{
       this->camera = Camera(location, (look - location), up);
     }
 
-    //void setAmbientLight(float intensity){
-    //this->ambientLight = AmbientLight(intensity);
-    //}
-
     void addDirectionalLight(
-        Material* material,
-        Vector3 direction){
+        Vector3 direction,
+        Material* material = 0
+        ){
+      if (material == 0){
+        material = &this->defaultMaterial;
+      }
       this->directionalLightList[directionalLightLoc] = 
-        DirectionalLight(material, direction);
+        DirectionalLight(direction, material);
       this->lightPointerList[this->lightLoc++] = 
         &this->directionalLightList[directionalLightLoc++];
     }
 
     void addPointLight(
         Vector3 location,
-        Material* material
+        Material* material = 0
         ){
+      if (material == 0){
+        material = &this->defaultMaterial;
+      }
       this->pointLightList[pointLightLoc] = 
         PointLight(location, material);
       this->lightPointerList[this->lightLoc++] = 
@@ -147,6 +150,7 @@ class Scene{
           refract,
           texture
           );
+      printf("shiny that was loaded: %d", this->materialList[this->materialLoc].getShine());
       return &this->materialList[materialLoc++];
     }
 
@@ -158,12 +162,10 @@ class Scene{
       return &this->camera;
     }
 
-    Color getColor(HitPoint* hp, Shader* shader, Ray ray){
+    Vector3 getColor(HitPoint* hp, Shader* shader, Ray ray){
       if (hp->getT() > 0){
       return shader->getColor(
-          this,
           hp,
-          ray.getDirection(),
           this->lightPointerList, 
           this->primPointerList,
           this->lightNum,
@@ -171,11 +173,11 @@ class Scene{
           );
       }
       else{
-        return Color(0,0,0);
+        return Vector3(0,0,0);
       }
     }
 
-    Color traceRay(Ray ray){
+    Vector3 traceRay(Ray ray){
       HitPoint closestHP = HitPoint();
       Primitive* closestPrim = this->primPointerList[0];
       float closestDis = -1;
@@ -186,7 +188,7 @@ class Scene{
           closestPrim = this->primPointerList[i];
         }
       }
-      Color retColor = getColor(&closestHP, closestPrim->getShader(), ray);
+      Vector3 retColor = getColor(&closestHP, closestPrim->getShader(), ray);
       //Vector3 nc = (closestHP.getNormal() * 255);
       //Color retColor = Color(nc[0], nc[1], nc[2]);
       return retColor;

@@ -13,7 +13,7 @@ class Material{
       this->reflect = 0;
       this->translucent = 0;
       this->glossy = 0;
-      this->shine = 100.0f;
+      this->shine = 100;
       this->refract = 0;
       this->texture = "";
     }
@@ -66,7 +66,7 @@ class Material{
       return this->specularCoefficient;
     }
 
-    float getShine(){
+    int getShine(){
       return this->shine;
     }
 

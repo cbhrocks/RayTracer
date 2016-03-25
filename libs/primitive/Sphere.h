@@ -18,9 +18,9 @@ class Sphere: public Primitive {
      */
     Sphere(Vector3 loc, Vector3 up, Vector3 direction, Shader* shader, Material* material)
       : Primitive(loc, up, direction, shader, material){
-      this->radius = up.length();
-      printf("radius: %f\n", this->radius);
-    }
+        this->radius = up.length();
+        printf("radius: %f\n", this->radius);
+      }
 
     virtual HitPoint getHitPoint(Ray ray){
       float a = ray.getDirection().dot(ray.getDirection());
@@ -29,11 +29,22 @@ class Sphere: public Primitive {
       float discriminant = pow(b, 2) - a * c;
       if (discriminant < 0){
         return HitPoint();
-      } else {
-        float t = min((-b - sqrt(discriminant)),(-b + sqrt(discriminant)))/a;
-        Vector3 hitLoc = ray.getOrigin() + ray.getDirection()*t;
-        Vector3 normal = (hitLoc - this->v1).normalize();
-        return HitPoint(t, normal, hitLoc, this->material);
+      } 
+      else {
+        //float t = min((-b - sqrt(discriminant)),(-b + sqrt(discriminant)))/a;
+        float t = (-b - sqrt(discriminant))/a;
+        Vector3 normal;
+        Vector3 hitLoc;
+        if (t < 0){
+          t = (-b + sqrt(discriminant))/a;
+          hitLoc = ray.getOrigin() + ray.getDirection()*t;
+          normal = (this->v1 - hitLoc).normalize();
+        }
+        else {
+          hitLoc = ray.getOrigin() + ray.getDirection()*t;
+          normal = (hitLoc - this->v1).normalize();
+        }
+        return HitPoint(t, normal, hitLoc, this->material, &ray);
       }
     }
 

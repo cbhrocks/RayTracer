@@ -10,8 +10,6 @@
 #include "../../Scene.h"
 #include <math.h>
 
-class Scene;
-
 class Shader{
   public:
     Shader(){
@@ -19,7 +17,6 @@ class Shader{
 
     virtual Vector3 calculateColor(
         HitPoint* hp,
-        Vector3 vDirection, 
         Light** lights, 
         Primitive** primList,
         int lightNum,
@@ -29,12 +26,13 @@ class Shader{
       if (iteration >10){
         return Vector3(0,0,0);
       }
+      Vector3 vDirection = hp->getRay()->getDirection();
       Vector3 rDirection = (vDirection - 2*(vDirection.dot(hp->getNormal()))*hp->getNormal()).normalize();
       Vector3 pixelColor = Vector3(0,0,0);
       Vector3 ambient;
-      Vector3 kd = hp->getMaterial()->getDiffuseCoefficient()*255;
-      Vector3 ks = hp->getMaterial()->getSpecularCoefficient()*255;
-      Vector3 ka = hp->getMaterial()->getAmbientCoefficient()*255;
+      Vector3 kd = hp->getMaterial()->getDiffuseCoefficient();
+      Vector3 ks = hp->getMaterial()->getSpecularCoefficient();
+      Vector3 ka = hp->getMaterial()->getAmbientCoefficient();
       for (int i = 0; i < lightNum; i++){
         float distance = (lights[i]->getLocation() - hp->getLocation()).length();
 
@@ -49,7 +47,17 @@ class Shader{
         Vector3 diffuse = kd * Id * max(0, l.dot(hp->getNormal()));
         Vector3 specular = ks * Is * pow(max(0, vDirection.dot(lr)), s);
 
-        if (!isShadow(primList, primNum, Ray(hp->getLocation(), l), distance)){
+        pixelColor += diffuse + specular;
+
+        //pixelColor = shadowColor(
+            //primList, 
+            //primNum, 
+            //Ray(hp->getLocation() + (hp->getNormal() * .001), l), 
+            //distance,
+            //pixelColor
+            //);
+        
+        if (!isShadow(primList, primNum, Ray(hp->getLocation() + (hp->getNormal() * .001), l), distance)){
           pixelColor += diffuse + specular;
         }
 
@@ -60,53 +68,70 @@ class Shader{
 
       pixelColor += ambient;
 
-      //pixelColor = pixelColor/17.965782;            //Spheres
-      //pixelColor = pixelColor/1.530942;             //Blue Sphere
-      pixelColor = pixelColor/9.090648;             //Cornell Box
+      if (hp->getMaterial()->getReflect() > 0){
+        pixelColor = pixelColor * (1 - hp->getMaterial()->getReflect());
+        pixelColor += hp->getMaterial()->getReflect() * traceRay(
+            Ray(hp->getLocation(), rDirection), 
+            lights, 
+            primList, 
+            lightNum, 
+            primNum, 
+            pixelColor,
+            iteration
+            );
+      }
 
-      pixelColor = pixelColor * (1.0 - hp->getMaterial()->getReflect());
-      pixelColor += hp->getMaterial()->getReflect() * traceRay(
-          Ray(hp->getLocation(), rDirection), 
-          lights, 
-          primList, 
-          lightNum, 
-          primNum, 
+      if (hp->getMaterial()->getTranslucent() < 1){
+      pixelColor = pixelColor * hp->getMaterial()->getTranslucent();
+      pixelColor += (1 - hp->getMaterial()->getTranslucent()) * traceRay(
+          getTransRay(hp, vDirection),
+          lights,
+          primList,
+          lightNum,
+          primNum,
           pixelColor,
           iteration
           );
-
-      //pixelColor = pixelColor * (1.0 - hp->getMaterial()->getTranslucent());
-      //pixelColor += hp->getMaterial()->getTranslucent() * traceRay(
-          //getTransRay(hp, vDirection),
-          //lights,
-          //primList,
-          //lightNum,
-          //primNum,
-          //pixelColor,
-          //iteration
-          //);
+      }
 
       return pixelColor;
     }
 
-    virtual Color getColor(
-        Scene* scene,
+    virtual Vector3 getColor(
         HitPoint* hp,
-        Vector3 vDirection, 
         Light** lights, 
         Primitive** primList,
         int lightNum,
         int primNum
         ){
-      Vector3 vColor = calculateColor(hp, vDirection, lights, primList, lightNum, primNum);
+      Vector3 vColor = calculateColor(hp, lights, primList, lightNum, primNum);
       Color color = Color(vColor[0], vColor[1], vColor[2]);
-      return color;
+      return vColor;
     }
 
   protected:
     Ray getTransRay(HitPoint* hp, Vector3 vDirection){
-      float cos1 = (-hp->getNormal()).dot(vDirection);
-      float sin1 ;
+      float refractIn = hp->getRay()->getRefract();
+      float refractOut = hp->getMaterial()->getRefract();
+      if (refractIn == refractOut){
+        refractOut = 1;
+        //printf("SET OUT TO !\n");
+      }
+
+      Vector3 rDirection = (vDirection - 2*(vDirection.dot(hp->getNormal()))*hp->getNormal()).normalize();
+      float cos = -(hp->getNormal()).dot(vDirection);
+      float root = 1 - pow(refractIn, 2) * (1 - pow(cos, 2))/pow(refractOut, 2);
+
+      if (root < 0){
+        //printf("return reflect\n");
+        return Ray(hp->getLocation() + hp->getNormal() * (-0.001), rDirection, refractIn);
+        //return Ray(hp->getLocation() + vDirection * (0.001), rDirection, refractIn);
+      }
+      else{
+        Vector3 first = (refractIn * (vDirection + hp->getNormal() * cos))/refractOut;
+        //return Ray(hp->getLocation() + hp->getNormal()*(-0.001), first - hp->getNormal() * sqrt(root), refractOut); 
+        return Ray(hp->getLocation() + vDirection*(0.001), first - hp->getNormal() * sqrt(root), refractOut); 
+      }
     }
 
     bool isShadow(Primitive** primList, int primNum, Ray ray, float distance){
@@ -117,6 +142,30 @@ class Shader{
         }
       }
       return false;
+    }
+
+    Vector3 shadowColor(Primitive** primList, int primNum, Ray ray, float distance, Vector3 pixelColor){
+      Vector3 curColor = pixelColor;
+      if (primNum <= 0){
+        return Vector3(0,0,0);
+      }
+      HitPoint HP = primList[0]->getHitPoint(ray);
+      int i;
+      float t;
+      //printf("distance: %f\n", distance);
+      for (i = 1, t = HP.getT(); i < primNum && pixelColor.length() > 0; i++){
+        if (t < distance && t > 0 && HP.getMaterial()->getTranslucent() <= 1){
+        //printf("T: %f\n", t);
+          if (HP.getMaterial()->getTranslucent() > 1){
+        printf("T: %f\n", t);
+            //printf("mat name: %s\n", HP.getMaterial()->getName());
+          }
+        //printf("trans: %f\n", HP.getMaterial()->getTranslucent());
+          //curColor = curColor * (1 - HP.getMaterial()->getTranslucent());
+        }
+        HP = primList[i]->getHitPoint(ray);
+      }
+      return curColor;
     }
 
     Vector3 traceRay(
@@ -141,7 +190,6 @@ class Shader{
       if (closestHP.getT() > -1){
         Vector3 retColor = closestPrim->getShader()->calculateColor(
             &closestHP,
-            ray.getDirection(), 
             lights, 
             primList,
             lightNum,
@@ -153,16 +201,6 @@ class Shader{
       else{
         return curColor;
       }
-    }
-
-    Color getReflectColor(
-        HitPoint* hp,
-        Vector3 vDirection, 
-        Light** lights, 
-        Primitive** primList,
-        int lightNum,
-        int primNum
-        ){
     }
 
     float max(float a, float b){

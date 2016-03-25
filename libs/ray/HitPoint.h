@@ -13,15 +13,16 @@ class HitPoint{
 
     HitPoint(float t, Vector3 normal, Vector3 location){
       this->normal = normal.normalize();
-      this->location = location + (normal * .001);
+      this->location = location;// + (normal * .000000001);
       this->t = t;
     }
 
-    HitPoint(float t, Vector3 normal, Vector3 location, Material *material){
+    HitPoint(float t, Vector3 normal, Vector3 location, Material *material, Ray *ray){
       this->normal = normal.normalize();
-      this->location = location + (normal * .001);
+      this->location = location;// + (normal * .000000001);
       this->t = t;
       this->material = material;
+      this->ray = ray;
     }
 
     float getT(){
@@ -44,11 +45,16 @@ class HitPoint{
       return this->location;
     }
 
+    Ray* getRay(){
+      return this->ray;
+    }
+
   private:
     Vector3 normal;
     Vector3 location;
     float t;
     Material *material;
+    Ray *ray;
 };
 
 #endif

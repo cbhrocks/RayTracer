@@ -16,8 +16,8 @@ class DirectionalLight : public Light {
     }
 
     DirectionalLight(
-        Material* material,
-        Vector3 direction) 
+        Vector3 direction, 
+        Material* material)
       : Light(material){
       this->direction = direction.normalize();
     }

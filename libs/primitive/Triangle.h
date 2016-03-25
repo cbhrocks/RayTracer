@@ -24,7 +24,7 @@ class Triangle : public Primitive {
       if ((this->v2 - this->v1).cross(hitLoc - this->v1).dot(this->normal) > 0 &&
           (this->v3 - this->v2).cross(hitLoc - this->v2).dot(this->normal) > 0 &&
           (this->v1 - this->v3).cross(hitLoc - this->v3).dot(this->normal) > 0){
-        return HitPoint(t, this->normal, hitLoc, this->material);
+        return HitPoint(t, this->normal, hitLoc, this->material, &ray);
       }
       //if (pointInTriangle(v1, v2, v3, hitLoc)){
       ////printf("found point in triangle for: \n");
