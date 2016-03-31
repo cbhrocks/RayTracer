@@ -37,7 +37,7 @@ class Light {
     }
 
     virtual Vector3 getDirection(Vector3 hitLoc){
-      return Vector3(0,0,0);
+      return Vector3(0,0,0).normalize();
     }
 
     virtual Vector3 getLocation(){

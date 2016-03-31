@@ -32,24 +32,12 @@ int main(int argc, char ** argv)
 
   loadPointLightInfo(&objData, &scene);
 
+  printf("Making Tree\n");
+  scene.createBVHTree();
+  printf("Done Making Tree\n");
+
   //create ray generator
   RayGenerator generator = RayGenerator(scene.getCamera(), RES, RES, 90.0f);
-
-  //create directional light in scene
-  //scene.addMaterial(
-      //"directLight", 
-      //Vector3(.2, .2, .2),
-      //Vector3(.5, .5, .5),
-      //Vector3(.8, .8, .8),
-      //0,
-      //0,
-      //0,
-      //0,
-      //0,
-      //0
-      //);
-  //scene.addDirectionalLight(scene.getMaterial(5), Vector3(1, -1, 0));
-  //scene.addDirectionalLight(Vector3(.1, .1, .1), Vector3(.25, .25, .25), Vector3(.4, .4, .4), Vector3(-1, 1, 0));
 
   //Convert vectors to RGB colors for viewing pleasure
   float highestValue = 0.0f;
@@ -58,12 +46,13 @@ int main(int argc, char ** argv)
     for(int x=0; x<RES; x++)
     {
       Ray r = generator.getRay(x, y);
-      Vector3 c = scene.traceRay(r);
+      Vector3 c = scene.traceRay(&r);
       float curBiggest = c[c.maxMagnitudeComponent()];
       if (curBiggest > highestValue){
         highestValue = curBiggest;
       }
       buffer.at(x,RES-y-1) = c;
+      //printf("finished ray at (%d, %d)\n", x, y);
     }
   }
 
@@ -73,8 +62,15 @@ int main(int argc, char ** argv)
   {
     for(int x=0; x<RES; x++)
     {
-      Vector3 oldV  = buffer.at(x,y)*255.0f/highestValue;
+      Vector3 oldV;
+      if (highestValue > 1){
+        oldV  = buffer.at(x,y)*255.0f/highestValue;
+      }
+      else{
+        oldV  = buffer.at(x,y)*255.0f;
+      }
       bufferC.at(x,y) = Color(oldV[0], oldV[1], oldV[2]);
+      //bufferC.at(x,y) = Color(abs(oldV[0]), abs(oldV[1]), abs(oldV[2]));
     }
   }
 
@@ -135,14 +131,14 @@ void loadSphereInfo(objLoader* objData, Scene* scene){
   for(int i=0; i<objData->sphereCount; i++)
   {
     obj_sphere *o = objData->sphereList[i];
-    printf(" sphere: %d\n", i);
+    //printf(" sphere: %d\n", i);
     
-    printf(" position: ");
-    printVector(objData->vertexList[ o->pos_index ]);
-    printf("\n up normal: ");
-    printVector(objData->normalList[ o->up_normal_index ]);
-    printf("\n equator normal: ");
-    printVector(objData->normalList[ o->equator_normal_index ]);
+    //printf(" position: ");
+    //printVector(objData->vertexList[ o->pos_index ]);
+    //printf("\n up normal: ");
+    //printVector(objData->normalList[ o->up_normal_index ]);
+    //printf("\n equator normal: ");
+    //printVector(objData->normalList[ o->equator_normal_index ]);
 
     Primitive* sphere;
     if (objData->materialCount > 0){
@@ -161,9 +157,9 @@ void loadSphereInfo(objLoader* objData, Scene* scene){
         );
     }
 
-    printf("\n material: ");
-    printf("%s", sphere->getMaterial()->getName());
-    printf("\n");
+    //printf("\n material: ");
+    //printf("%s", sphere->getMaterial()->getName());
+    //printf("\n");
   }
 }
 
@@ -174,19 +170,19 @@ void loadTriangleInfo(objLoader* objData, Scene* scene){
   for(int i=0; i<objData->faceCount; i++)
   {
     obj_face *o = objData->faceList[i];
-    printf(" face:  ");
-    for(int j=0; j<3; j++)
-    {
-      printVector(objData->vertexList[ o->vertex_index[j] ]);
-      //printf(" - normal: ");
-      //printVector(objData->normalList[ o->normal_index[j] ]);
-      printf("| ");
-    }
-    if (objData->materialCount > 0){
-      printf("material: ");
-      printf("%s", scene->getMaterial( o->material_index)->getName());
-    }
-    printf("\n");
+    //printf(" face:  ");
+    //for(int j=0; j<3; j++)
+    //{
+      //printVector(objData->vertexList[ o->vertex_index[j] ]);
+      ////printf(" - normal: ");
+      ////printVector(objData->normalList[ o->normal_index[j] ]);
+      //printf("| ");
+    //}
+    //if (objData->materialCount > 0){
+      //printf("material: ");
+      //printf("%s", scene->getMaterial( o->material_index)->getName());
+    //}
+    //printf("\n");
 
     //printVector( objData->normalList[ o->normal_index[0] ]);
     //printVector( objData->normalList[ o->normal_index[1] ]);

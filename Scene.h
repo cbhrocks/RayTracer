@@ -1,6 +1,7 @@
 #ifndef __SCENE
 #define __SCENE
 
+#include "Buffer.h"
 #include "libs/vector/GenVector.h"
 #include "libs/png/simplePNG.h"
 #include "libs/objLoad/objLoader.h"
@@ -9,19 +10,24 @@
 #include "libs/shading/Material.h"
 #include "libs/shading/Shader.h"
 #include "libs/primitive/Camera.h"
+#include "libs/primitive/BVHNode.h"
 #include "libs/primitive/Primitive.h"
 #include "libs/primitive/Sphere.h"
 #include "libs/primitive/Triangle.h"
 #include "libs/shading/Light.h"
 #include "libs/shading/DirectionalLight.h"
 #include "libs/shading/PointLight.h"
-#include "Buffer.h"
 
 #include <math.h>
 
 class Scene{
   public:
-    Scene(int sphereNum, int triangleNum, int directionalLightNum, int pointLightNum, int shaderNum, int materialNum){
+    Scene(int sphereNum, 
+        int triangleNum, 
+        int directionalLightNum, 
+        int pointLightNum, 
+        int shaderNum, 
+        int materialNum){
       this->primNum = sphereNum + triangleNum;
       this->lightNum = directionalLightNum + pointLightNum;
 
@@ -52,7 +58,7 @@ class Scene{
       if (lightNum == 0){
         this->directionalLightList = new DirectionalLight[1];
         this->lightPointerList = new Light*[1];
-        this->directionalLightList[directionalLightNum] = defaultLight;
+        this->directionalLightList[directionalLightNum] = this->defaultLight;
         this->lightPointerList[lightNum++] = &this->directionalLightList[directionalLightNum++];
       }
     }
@@ -71,6 +77,8 @@ class Scene{
         material = &this->defaultMaterial;
       }
       this->sphereList[this->sphereLoc] = Sphere(location, up, direction, shader, material);
+      this->sphereList[this->sphereLoc].getMin().print();
+      this->sphereList[this->sphereLoc].getMax().print();
       return this->primPointerList[this->primLoc++] = &this->sphereList[sphereLoc++];
     }
 
@@ -150,7 +158,6 @@ class Scene{
           refract,
           texture
           );
-      printf("shiny that was loaded: %d", this->materialList[this->materialLoc].getShine());
       return &this->materialList[materialLoc++];
     }
 
@@ -162,39 +169,31 @@ class Scene{
       return &this->camera;
     }
 
-    Vector3 getColor(HitPoint* hp, Shader* shader, Ray ray){
-      if (hp->getT() > 0){
-      return shader->getColor(
-          hp,
-          this->lightPointerList, 
-          this->primPointerList,
-          this->lightNum,
-          this->primNum
-          );
+    Vector3 traceRay(Ray* ray){
+      HitPoint hp = this->tree.getHitPoint(ray);
+      if (hp.getT() > 0){
+        return hp.getShader()->calculateColor(
+            &hp,
+            this->lightPointerList, 
+            &this->tree,
+            this->lightNum,
+            this->primNum
+            );
+        //return(hp.getRay()->getDirection() * Vector3(255.0f, 255.0f, 255.0f));
       }
       else{
         return Vector3(0,0,0);
       }
+      return this->tree.getBoxNormal(ray, 50) * 255.0f;
     }
 
-    Vector3 traceRay(Ray ray){
-      HitPoint closestHP = HitPoint();
-      Primitive* closestPrim = this->primPointerList[0];
-      float closestDis = -1;
-      for (int i = 0; i < this->primNum; i++){
-        HitPoint HP = this->primPointerList[i]->getHitPoint(ray);
-        if (HP.getT() > 0 && (HP.getT() < closestHP.getT() || closestHP.getT() <= 0)){
-          closestHP = HP;
-          closestPrim = this->primPointerList[i];
-        }
-      }
-      Vector3 retColor = getColor(&closestHP, closestPrim->getShader(), ray);
-      //Vector3 nc = (closestHP.getNormal() * 255);
-      //Color retColor = Color(nc[0], nc[1], nc[2]);
-      return retColor;
+    void createBVHTree(){
+      this->tree = BVHNode(this->primPointerList, this->primNum);
     }
 
   private:
+    BVHNode tree;
+
     Material defaultMaterial;
     Shader defaultShader;
     DirectionalLight defaultLight;

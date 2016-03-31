@@ -7,12 +7,12 @@
 class DirectionalLight : public Light {
   public:
     DirectionalLight() : Light(){
-      this->direction = Vector3(-1.0f, 1.0f, 1.0f).normalize();
+      this->direction = Vector3(1.0f, -1.0f, -1.0f).normalize();
     }
 
     DirectionalLight(Material* material) 
       : Light(material){
-      this->direction = Vector3(-1.0f, 1.0f, 1.0f).normalize();
+      this->direction = Vector3(1.0f, -1.0f, -1.0f).normalize();
     }
 
     DirectionalLight(

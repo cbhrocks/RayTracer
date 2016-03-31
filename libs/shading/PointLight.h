@@ -11,7 +11,7 @@ class PointLight: public Light{
 
     PointLight(Vector3 location, Material* material)
       : Light(location, material){
-        this->constantAttenuation = 1.2;
+        this->constantAttenuation = 1.0;
         this->linearAttenuation = 0;
         this->exponentialAttenuation = 0;
       }
@@ -42,8 +42,8 @@ class PointLight: public Light{
     }
 
     virtual Vector3 getDirection(Vector3 hitLoc){
-      //return (hitLoc - this->location).normalize();
-      return (this->location - hitLoc).normalize();
+      return (hitLoc - this->location).normalize();
+      //return (this->location - hitLoc).normalize();
     }
 
   private:

@@ -17,6 +17,12 @@ class Primitive {
       this->v3 = Vector3(0,0,0);
     }
 
+    Primitive(Vector3 v1, Vector3 v2, Vector3 v3 = Vector3(0,0,0)){
+      this->v1 = v1;
+      this->v2 = v2;
+      this->v3 = v3;
+    }
+
     Primitive(Vector3 v1, Vector3 v2, Vector3 v3, Shader* shader, Material *material){
       this->v1 = v1;
       this->v2 = v2;
@@ -41,10 +47,25 @@ class Primitive {
       return this->material;
     }
 
-    virtual HitPoint getHitPoint(Ray r){
+    virtual HitPoint getHitPoint(Ray* r){
       return HitPoint();
     }
 
+    virtual Vector3 getCenter(){
+      return Vector3(0,0,0);
+    }
+
+    virtual Vector3 getMin(){
+      return Vector3(0,0,0);
+    }
+
+    virtual Vector3 getMax(){
+      return Vector3(0,0,0);
+    }
+
+    virtual char* getName(){
+      return "primitive";
+    }
   protected:
     Vector3 v1;
     Vector3 v2;

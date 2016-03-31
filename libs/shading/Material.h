@@ -9,11 +9,11 @@ class Material{
       this->name = "default";
       this->ambientCoefficient = Vector3(0.2f, 0.2f, 0.2f);
       this->diffuseCoefficient = Vector3(0.4f, 0.4f, 0.4f);
-      this->specularCoefficient = Vector3(0.8f, 0.8f, 0.8f);
+      this->specularCoefficient = Vector3(0.4f, 0.4f, 0.4f);
       this->reflect = 0;
-      this->translucent = 0;
+      this->translucent = 1;
       this->glossy = 0;
-      this->shine = 100;
+      this->shine = 10;
       this->refract = 0;
       this->texture = "";
     }

@@ -44,7 +44,7 @@ d  1
 newmtl trans_sphere
 Ka  0.6 0.6 0.6
 Kd  0.5 0.5 0.5
-Ks  10 10 10
+Ks  0 0 0
 Ns 200
 Ni 1.52
 d .2
@@ -53,7 +53,7 @@ r .5
 newmtl trans_sphere_bubble
 Ka  0.6 0.6 0.6
 Kd  0.5 0.5 0.5
-Ks  50 50 50
+Ks  0 0 0
 Ns 20000
 Ni 1.02
 d .2
