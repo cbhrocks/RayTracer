@@ -23,7 +23,6 @@ class Sphere: public Primitive {
       }
 
     virtual HitPoint getHitPoint(Ray *ray){
-      //float a = ray.getDirection().dot(ray.getDirection());
       float b = ray->getDirection().dot((ray->getOrigin() - this->v1));
       float c = (ray->getOrigin() - this->v1).dot(ray->getOrigin() - this->v1) - pow(this->radius, 2);
       float discriminant = pow(b, 2) - c;
@@ -31,20 +30,20 @@ class Sphere: public Primitive {
         return HitPoint();
       } 
       else {
-        //float t = min((-b - sqrt(discriminant)),(-b + sqrt(discriminant)))/a;
-        float t = (-b - sqrt(discriminant));
+        float t;
         Vector3 normal;
         Vector3 hitLoc;
-        if (t < 0){
+        if (ray->getOrigin().distance(this->v1) < this->radius){
           t = (-b + sqrt(discriminant));
           hitLoc = ray->getOrigin() + ray->getDirection()*t;
           normal = (this->v1 - hitLoc).normalize();
         }
         else {
+          t = (-b - sqrt(discriminant));
           hitLoc = ray->getOrigin() + ray->getDirection()*t;
           normal = (hitLoc - this->v1).normalize();
         }
-        return HitPoint(t, normal, hitLoc, this->material, this->shader, ray);
+        return HitPoint(t, normal, this->material, this->shader, ray);
       }
     }
 

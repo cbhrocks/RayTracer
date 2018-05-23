@@ -1,7 +1,7 @@
 #ifndef __RAYTRACER
 #define __RAYTRACER
 
-#define RES 400
+#define RES 500
 
 #include "libs/vector/GenVector.h"
 #include "libs/png/simplePNG.h"
@@ -13,6 +13,7 @@
 
 #include <math.h> //Math funcitons and some constants
 #include <stdio.h>
+#include <ctime>
 
 Vector3 objToGenVec(obj_vector const * objVec);
 

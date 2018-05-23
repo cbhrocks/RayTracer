@@ -179,12 +179,12 @@ class Scene{
             this->lightNum,
             this->primNum
             );
-        //return(hp.getRay()->getDirection() * Vector3(255.0f, 255.0f, 255.0f));
+        return(hp.getRay()->getDirection() * Vector3(255.0f, 255.0f, 255.0f));
       }
       else{
         return Vector3(0,0,0);
       }
-      return this->tree.getBoxNormal(ray, 50) * 255.0f;
+      //return this->tree.getBoxNormal(ray, 2) * 255.0f;
     }
 
     void createBVHTree(){

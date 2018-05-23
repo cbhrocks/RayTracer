@@ -7,6 +7,8 @@
 #include "../shading/Shader.h"
 #include "../shading/Material.h"
 
+#include <utility>
+
 class Shader;
 
 class Primitive {
@@ -49,6 +51,14 @@ class Primitive {
 
     virtual HitPoint getHitPoint(Ray* r){
       return HitPoint();
+    }
+
+    virtual float getDistance(Ray* r){
+      return -1.0f;
+    }
+
+    virtual Vector3 getNormal(){
+      return Vector3(0,0,0);
     }
 
     virtual Vector3 getCenter(){

@@ -33,11 +33,16 @@ int main(int argc, char ** argv)
   loadPointLightInfo(&objData, &scene);
 
   printf("Making Tree\n");
+  clock_t begin = clock();
   scene.createBVHTree();
-  printf("Done Making Tree\n");
+  clock_t end = clock();
+  printf("Done Making Tree: %lF\n", double(end - begin)/CLOCKS_PER_SEC);
 
   //create ray generator
   RayGenerator generator = RayGenerator(scene.getCamera(), RES, RES, 90.0f);
+
+  printf("Tracing Rays\n");
+  begin = clock();
 
   //Convert vectors to RGB colors for viewing pleasure
   float highestValue = 0.0f;
@@ -55,6 +60,9 @@ int main(int argc, char ** argv)
       //printf("finished ray at (%d, %d)\n", x, y);
     }
   }
+
+  end = clock();
+  printf("Done Tracing Rays: %lF\n", double(end - begin)/CLOCKS_PER_SEC);
 
   //printf("highest value: %f", highestValue);
 

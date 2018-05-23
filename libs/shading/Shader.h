@@ -108,7 +108,6 @@ class Shader{
 
       if (refractIn == refractOut){
         refractOut = 1;
-        //printf("SET OUT TO !\n");
       }
 
       Vector3 rDirection = vDirection - 2*(vDirection.dot(hp->getNormal()))*hp->getNormal();
@@ -116,9 +115,10 @@ class Shader{
       float root = 1 - pow(refractIn, 2) * (1 - pow(cos, 2))/pow(refractOut, 2);
 
       if (root < 0){
-        //printf("return reflect\n");
-        return Ray(hp->getLocation() + hp->getNormal() * (0.001), rDirection, refractIn);
-        //return Ray(hp->getLocation() + vDirection * (0.001), rDirection, refractIn);
+        return Ray(
+            hp->getLocation() + hp->getNormal() * (0.001), 
+            vDirection - 2*(vDirection.dot(hp->getNormal()))*hp->getNormal(), 
+            refractIn);
       }
       else{
         Vector3 first = (refractIn * (vDirection - hp->getNormal() * cos))/refractOut;
@@ -127,7 +127,6 @@ class Shader{
             (first - hp->getNormal() * sqrt(root)).normalize(), 
             refractOut
             );
-        //return Ray(hp->getLocation() + vDirection*(0.001), first - hp->getNormal() * sqrt(root), refractOut); 
       }
     }
 

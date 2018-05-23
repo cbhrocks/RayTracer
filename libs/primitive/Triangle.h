@@ -11,13 +11,11 @@ class Triangle : public Primitive {
 
     Triangle(Vector3 v1, Vector3 v2, Vector3 v3, Shader* shader, Material* material) 
       : Primitive(v1, v2, v3, shader, material){
-        //this->normal = (v2-v1).cross(v3-v1).normalize();
+        this->normal = ((v2-v1).cross(v3-v1)).normalize();
         this->center = (v1 + v2 + v3)/3;
       }
 
     virtual HitPoint getHitPoint(Ray* ray){
-      //Vector3 normal = (this->v1 - this->v2).cross(this->v2 - this->v3); 
-      Vector3 normal = ((v2-v1).cross(v3-v1)).normalize();
       float t = ((this->center - ray->getOrigin()).dot(normal)) /
         (ray->getDirection().dot(normal));
       Vector3 hitLoc = ray->getOrigin() + ray->getDirection() * t;
@@ -25,10 +23,40 @@ class Triangle : public Primitive {
       if ((this->v2 - this->v1).cross(hitLoc - this->v1).dot(normal) > 0 &&
           (this->v3 - this->v2).cross(hitLoc - this->v2).dot(normal) > 0 &&
           (this->v1 - this->v3).cross(hitLoc - this->v3).dot(normal) > 0){
-        return HitPoint(t, normal, hitLoc, this->material, this->shader, ray);
+        return HitPoint(t, this->normal, this->material, this->shader, ray);
       }
       else {
         return HitPoint();
+      }
+    }
+
+    virtual HitPoint fillHitPoint(Ray* ray){
+      float t = ((this->center - ray->getOrigin()).dot(normal)) /
+        (ray->getDirection().dot(normal));
+      Vector3 hitLoc = ray->getOrigin() + ray->getDirection() * t;
+
+      if ((this->v2 - this->v1).cross(hitLoc - this->v1).dot(normal) > 0 &&
+          (this->v3 - this->v2).cross(hitLoc - this->v2).dot(normal) > 0 &&
+          (this->v1 - this->v3).cross(hitLoc - this->v3).dot(normal) > 0){
+        return HitPoint(t, this->normal, this->material, this->shader, ray);
+      }
+      else {
+        return HitPoint();
+      }
+    }
+
+    virtual float getDistance(Ray* ray){
+      float t = ((this->center - ray->getOrigin()).dot(normal)) /
+        (ray->getDirection().dot(normal));
+      Vector3 hitLoc = ray->getOrigin() + ray->getDirection() * t;
+
+      if ((this->v2 - this->v1).cross(hitLoc - this->v1).dot(normal) > 0 &&
+          (this->v3 - this->v2).cross(hitLoc - this->v2).dot(normal) > 0 &&
+          (this->v1 - this->v3).cross(hitLoc - this->v3).dot(normal) > 0){
+        return t;
+      }
+      else {
+        return t;
       }
     }
 
@@ -68,6 +96,7 @@ class Triangle : public Primitive {
 
   private:
     Vector3 center;
+    Vector3 normal;
 
     bool pointInTriangle(Vector3 A, Vector3 B, Vector3 C, Vector3 P){
       Vector3 u = B - A;

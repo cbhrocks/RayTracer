@@ -27,6 +27,13 @@ class Ray
       this->refract = refract;
     }
 
+    void setDirection(Vector3 direction){
+      this->direction = direction;
+      for (int i = 0; i < 3; i++){
+        this->directionInv[i] = 1/direction[i];
+      }
+    }
+
     Vector3 getDirection(){
       return this->direction;
     }
@@ -35,12 +42,20 @@ class Ray
       return this->directionInv;
     }
 
+    void setOrigin(Vector3 origin){
+      this->origin = origin;
+    }
+
     Vector3 getOrigin(){
       return this->origin;
     }
 
     float getRefract(){
       return this->refract;
+    }
+
+    void setRefract(float refract){
+      this->refract = refract;
     }
 
   private:

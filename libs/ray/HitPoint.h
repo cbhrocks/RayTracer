@@ -15,27 +15,26 @@ class HitPoint{
       this->ray = 0;
     }
 
-    HitPoint(float t, Vector3 normal, Vector3 location){
-      this->normal = normal.normalize();
-      this->location = location;// + (normal * .000000001);
+    HitPoint(float t, Vector3 normal){
+      this->normal = normal;
       this->t = t;
       this->ray = 0;
     }
 
-    HitPoint(float t, Vector3 normal, Vector3 location, Material *material, Shader* shader, Ray *ray){
-      this->normal = normal.normalize();
-      this->location = location;// + (normal * .000000001);
+    HitPoint(float t, Vector3 normal, Material *material, Shader* shader, Ray *ray){
+      this->normal = normal;
       this->t = t;
       this->material = material;
       this->shader = shader;
-      if (ray == 0){
-        printf("NULL RAY DETECTED\n");
-      }
       this->ray = ray;
     }
 
     float getT(){
       return this->t;
+    }
+
+    void setNormal(Vector3 normal){
+      this->normal = normal;
     }
 
     Vector3 getNormal(){
@@ -51,7 +50,7 @@ class HitPoint{
     }
 
     Vector3 getLocation(){
-      return this->location;
+      return this->ray->getOrigin() + this->ray->getDirection() * this->t;
     }
 
     Ray* getRay(){
@@ -68,7 +67,6 @@ class HitPoint{
 
   private:
     Vector3 normal;
-    Vector3 location;
     float t;
     Material *material;
     Shader* shader;
