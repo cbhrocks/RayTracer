@@ -8,7 +8,7 @@ int main(int argc, char ** argv)
   Buffer<Color> bufferC = Buffer<Color>(RES, RES);
 
   //Need at least two arguments (obj input and png output)
-  if(argc < 3)
+  if(argc < 2)
   {
     printf("Usage %s input.obj output.png\n", argv[0]);
     exit(0);
@@ -82,10 +82,56 @@ int main(int argc, char ** argv)
     }
   }
 
-  //Write output buffer to file argv2
-  simplePNG_write(argv[2], bufferC.getWidth(), bufferC.getHeight(), (unsigned char*)&bufferC.at(0,0));
+  if (argc == 2){
+      SDL_Window *window = NULL;
+      SDL_Renderer *renderer = NULL;
 
-  printf("done making picture\n");
+      SDL_Init(SDL_INIT_VIDEO);
+
+      window = SDL_CreateWindow(
+              "Raytracer",
+              SDL_WINDOWPOS_UNDEFINED,
+              SDL_WINDOWPOS_UNDEFINED,
+              RES,
+              RES,
+              0);
+
+      renderer = SDL_CreateRenderer(window, -1, 0);
+
+      Color pixelColor;
+      for(int y=0; y<RES; y++)
+      {
+          for(int x=0; x<RES; x++)
+          {
+              pixelColor = bufferC.at(x,y);
+              SDL_SetRenderDrawColor(renderer, pixelColor[0], pixelColor[1], pixelColor[2], 255);
+              SDL_RenderDrawPoint(renderer, x, y);
+          }
+      }
+
+      while (1) {
+          SDL_Event e;
+          if (SDL_PollEvent(&e)) {
+              if (e.type == SDL_QUIT) {
+                  break;
+              }
+          }
+          SDL_RenderPresent(renderer);
+      }
+
+      SDL_DestroyRenderer(renderer);
+      SDL_DestroyWindow(window);
+
+      SDL_Quit();
+
+  }
+
+  else{
+      //Write output buffer to file argv2
+      simplePNG_write(argv[2], bufferC.getWidth(), bufferC.getHeight(), (unsigned char*)&bufferC.at(0,0));
+
+      printf("done making picture\n");
+  }
 
   return 0;
 }
