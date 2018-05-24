@@ -7,21 +7,28 @@ ifdef NEWLINE
 endif
 
 # compile settings
-CXX?=g++
-LINK=g++
-PROGRAM=a.out
-DEL=rm -rf
-LIBS=-lm
-WARN=-w
-OP=-O0
-VERS=-std=c++0x
+CXX? = g++
+LINK = g++
+PROGRAM = a.out
+DEL = rm -rf
+LIBS = -lm
+WARN = -w
+OP = -O0
+VERS = -std=c++0x
 DEBUG = -g
-FLAGS= $(WARN) $(OP) $(DEBUG)
+FLAGS = $(WARN) $(OP) $(DEBUG)
 
 # setup object list
-LOCAL_CPP_OBJECTS= $(patsubst %.cpp, %.o, $(wildcard ./*.cpp))
-LOCAL_C_OBJECTS= $(patsubst %.c, %.o, $(wildcard ./*.c))
-LOADER_OBJECTS= $(patsubst %.cpp, %.o, $(wildcard ./libs/objLoad/*.cpp)) # the OBJ loader sub dir
+LOCAL_CPP_OBJECTS = $(patsubst %.cpp, %.o, $(wildcard ./*.cpp))
+LOCAL_C_OBJECTS = $(patsubst %.c, %.o, $(wildcard ./*.c))
+LOADER_OBJECTS = $(patsubst %.cpp, %.o, $(wildcard ./libs/objLoad/*.cpp)) # the OBJ loader sub dir
+
+SDL_CFLAGS := $(shell pkg-config --cflags sdl2)
+SDL_LIBS := $(shell pkg-config --libs sdl2)
+
+override FLAGS += $(SDL_CFLAGS)
+override LIBS += $(SDL_LIBS)
+
 OBJECTS=$(LOCAL_C_OBJECTS) $(LOCAL_CPP_OBJECTS) $(LOADER_OBJECTS)
 
 # make targets

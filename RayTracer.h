@@ -11,6 +11,7 @@
 #include "libs/ray/RayGenerator.h"
 #include "Buffer.h"
 
+#include <SDL.h>
 #include <math.h> //Math funcitons and some constants
 #include <stdio.h>
 #include <ctime>
